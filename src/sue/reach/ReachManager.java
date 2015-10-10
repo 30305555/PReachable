@@ -33,8 +33,6 @@ public class ReachManager {
 	 */
 	private static final String CACHESTATUS = "cachestatus";
 
-//	private Logger log = Logger.getLogger(ReachFactory.class.toString());
-
 	private static String FILENAME = "iplist.txt";
 
 	/**
@@ -54,17 +52,11 @@ public class ReachManager {
 	private int os = 0;
 	
 	/**
-	 * ロードカウンタ
-	 */
-	private int loadcnt = 0;
-	
-	/**
 	 * GCInterval
 	 */
 	private long gcInterval = 10000;
 	
 	private boolean gc = false;
-	
 	ObjectOutputStream oos = null;
 	ObjectInputStream ois = null;
 
@@ -73,6 +65,10 @@ public class ReachManager {
 	 */
 	private Queue<AsyncPing> asyncQueue = new ConcurrentLinkedQueue<AsyncPing>();
 
+	/**
+	 * IPリスト件数を取得します
+	 * @return int
+	 */
 	public int getIPlistcnt(){
 		return this.cacheIPlist.size();
 	}
@@ -148,12 +144,14 @@ public class ReachManager {
 		System.out.println("永続化キャッシュの取得に失敗");
 		return this.cacheStatus.get(key).get(cycle);
 	}
+	
 	/**
+	 * キャッシュにputする.
 	 * @param cacheStatus セットする cacheStatus
 	 */
 	public void putCacheStatus(Integer key,ResultDTO value) {
-//		synchronized (this.cacheStatus) {
 		synchronized(this){
+			// 当該のリザルトリストを取得
 		List<ResultDTO> list = this.cacheStatus.get(key);
 		boolean nullflg = false;
 		// 要素なし
@@ -162,12 +160,12 @@ public class ReachManager {
 			// ArrayList を生成
 			list = new ArrayList<ResultDTO>();
 		}
+		
 		// リストサイズ-1生成
 		ResultDTO dto[] = new ResultDTO[list.size()+1];
 		for ( int i = 0; i< list.size();i++){
 			dto[i] = list.get(i);
 		}
-		
 			list.clear();
 			int i = 0;
 			for ( i = 0; i< dto.length;i++){
@@ -175,22 +173,22 @@ public class ReachManager {
 			}
 			list.add(i,value);
 			this.cacheStatus.put(key, list);
-	//		ObjectOutputStream oos = null;
+
 			try{
-				// StatusDTOの永続化
-//				oos = new ObjectOutputStream(new FileOutputStream("cachestatus"));
+				// Statusの永続化！
 				oos.writeObject(this.cacheStatus);
 				System.out.println("Cache list:"+nullflg+", key:"+key+", size:"+this.cacheStatus.size()+", list size:"+list.size());
 			} catch ( Exception ex){
 				System.out.println("永続化キャッシュの出力に失敗");
 				ex.printStackTrace();
+				// 再オープンを行う
 				reOpen();
 			}
 		}
 	}
 	
 	/**
-	 * キャッシュ情報の再読み込み
+	 * キャッシュライタの再生成
 	 */
 	public void reOpen(){
 		// いったんstreamを閉じる
@@ -214,12 +212,17 @@ public class ReachManager {
 		}
 	}
 	/**
-	 * ReachFactory instance
+	 * ReachManager my  instance
 	 */
 	private static ReachManager me = null;
 
 	/**
 	 * load IPList
+	 * 
+	 * this format.
+	 * ------------------
+	 * ipaddress,interval,count
+	 * ------------------
 	 */
 	public void loadIplist(){
 
@@ -234,18 +237,19 @@ public class ReachManager {
 
 		// バックアップ用
 		List<IPListDTO> cacheIPlistbkup = this.cacheIPlist;
+
 		// エラーフラグ
 		boolean errflg = false;
 		synchronized (this.cacheIPlist) {
 			
-			// キャッシュリストをクリア
+			// 現在のキャッシュリストをクリア
 			this.cacheIPlist.clear();
+			
 			try {
 				// FileReader
 				freader = new FileReader(FILENAME);
 				// BufferedReader
 				breader = new BufferedReader(freader); 
-				
 				// ipListの1行読み込み
 				while((line = breader.readLine()) != null){
 					
@@ -305,7 +309,6 @@ public class ReachManager {
 
 			}
 		}
-		
 	}
 	/**
 	 * public {@link Constructor}
@@ -313,6 +316,7 @@ public class ReachManager {
 	 */
 	ReachManager(int os){
 		this.os = os;
+		
 		// IPListの読み込み
 		loadIplist();
 		
@@ -353,6 +357,7 @@ public class ReachManager {
 		}
 		return cacheIPlist.get(index);
 	}
+	
 	/**
 	 * キャッシュをクリアします
 	 */
@@ -391,11 +396,10 @@ public class ReachManager {
 				}
 			}
 		}
-		
 	}
 
 	/**
-	 * エンキュー
+	 * 分析キューにエンキュー
 	 * @param asyncPing
 	 */
 	public void enqueue(AsyncPing asyncPing) {
@@ -403,7 +407,7 @@ public class ReachManager {
 	}
 	
 	/**
-	 * デキュー
+	 * 分析キューからデキュー
 	 * @return
 	 */
 	public AsyncPing dequeue() {

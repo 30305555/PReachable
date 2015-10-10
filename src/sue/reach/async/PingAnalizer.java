@@ -3,7 +3,6 @@ package sue.reach.async;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.Iterator;
 import java.util.List;
 
 import sue.reach.ReachManager;
@@ -21,7 +20,11 @@ public class PingAnalizer extends Thread {
 	private static String ERR_KEYWORD="損失 = ";
 	private static final int DEQUEUE_INTERVAL = 100;
 	private ReachManager manager;
-	
+
+	/**
+	 * コンストラクタ
+	 * @param manager
+	 */
 	public PingAnalizer(ReachManager manager) {
 		this.manager = manager;
 	}
@@ -33,11 +36,13 @@ public class PingAnalizer extends Thread {
 		// 刈り取りループ
 		while (true) {
 			
-			// 定常刈り取り
+			// 分析キューより刈り取り
 			AsyncPing ping = this.manager.dequeue();
 
 			if ( ping == null ) {
+				// なし
 				try {
+					// インターバルを置いて再刈り取りを行う
 					Thread.sleep(DEQUEUE_INTERVAL);
 					continue;
 				} catch (Exception e) {
@@ -54,32 +59,34 @@ public class PingAnalizer extends Thread {
 			// プロセスリスト数くり返し
 			for ( Process proc : processList ) {
 				
-				// プロセス終了待ち TODO:無限待ちを改善したい
+				// プロセス終了待ち(現状無限待ち) TODO:無限待ちを改善したい
 				try {
 					proc.waitFor ();
 				} catch (InterruptedException e) {
 					// 割り込み例外
 					e.printStackTrace();
+					// 例外対応
 					errInterrupted(ping.getResultDto(), e);
 					continue;
 				}
 
 				// 戻り値取得
 				int exitvalue = proc.exitValue();
-				
-	//				System.out.println(this.factory.getIPList(this.ruleid).getIpv4addr()+" Thread Exit Value:"+exitvalue);
-	
+
 				// プロセスのストリームから実行結果を取得
 				BufferedReader reader = new BufferedReader(new InputStreamReader(proc.getInputStream()));			
 				StringBuilder builder = new StringBuilder();
+
 				while(true){
 					try {
+						// スリープ TODO:外出し検討
 						Thread.sleep(5);
 					} catch (Exception e) {
 						e.printStackTrace();
 						continue;
 					}
-					
+
+					// TODO:別メソッドに処理を移管する
 					String str;
 					try {
 						str = reader.readLine();
@@ -126,12 +133,9 @@ public class PingAnalizer extends Thread {
 
 				//正常
 				resultDto.errStack = null;
-				resultDto.msg = "";
-				for ( int i=0;i<200;i++){
-					resultDto.msg += "                                                                                                 123";
-				}
+				resultDto.msg = "OK.";
 				
-				// マネージャキャッシュ設定
+				// マネージャキャッシュへ設定
 				this.manager.putCacheStatus(resultDto.Ruleid,resultDto);
 
 				
@@ -157,8 +161,9 @@ public class PingAnalizer extends Thread {
 		// マネージャキャッシュ設定
 		this.manager.putCacheStatus(resultDto.Ruleid,resultDto);
 	}
+
 	/**
-	 *  分析
+	 *  分析処理
 	 * @param str
 	 * @return int array
 	 */

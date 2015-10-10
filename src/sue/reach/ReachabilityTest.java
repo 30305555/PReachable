@@ -3,17 +3,23 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-
+/**
+ * Reachability Test
+ * @author Takeshi
+ *
+ */
 public class ReachabilityTest {
 	public static int COUNT = 2000;
     public static final int TIMEOUT = 1200;
     public static long count = 0;
-//    public enum Start {Sato, Sue, Take, Yamaguchi};
 
+    /**
+     * コンストラクタ
+     * @param paddressText address
+     * @param pcount count
+     */
     public ReachabilityTest(String paddressText, int pcount) {
         try {
-            long max = 0;
-            long min = 0;
             long sum = 0;
             int num = 0;
             int ok = 0;
@@ -37,7 +43,6 @@ public class ReachabilityTest {
             			Thread.sleep(10);
             		}
 				} catch (InterruptedException e) {
-					// TODO 自動生成された catch ブロック
 					e.printStackTrace();
 				}
             	sendp[i] = new Sendping(address);
@@ -53,7 +58,6 @@ public class ReachabilityTest {
             	try {
 					Thread.sleep(5);
 				} catch (InterruptedException e) {
-					// TODO 自動生成された catch ブロック
 					e.printStackTrace();
 				}
             	for(int j = 0; j< COUNT;j++){
@@ -85,8 +89,6 @@ public class ReachabilityTest {
 
         } catch (UnknownHostException ex) {
             System.err.println("Unknown host " + paddressText + ".");
-        } catch (IOException ex) {
-            System.err.println("Network Error Occurred.");
         }
     }
 
@@ -98,30 +100,48 @@ public class ReachabilityTest {
     	}
     }
 }
+/**
+ * java ping.
+ * @author Takeshi
+ *
+ */
 class Sendping implements Runnable {
 	private InetAddress address;
 	private int status = 0;
+	/**
+	 * status set
+	 * @param status
+	 */
 	public void setStatus(int status) {
 		this.status = status;
 	}
+	/**
+	 * status get
+	 * @return int 
+	 */
 	public int getStatus() {
 		return status;
 	}
+	/**
+	 * java ping constructor
+	 * @param args
+	 */
 	public Sendping( InetAddress args ) {
-		// TODO 自動生成されたコンストラクター・スタブ
 		this.address = args;
 	}
+	/**
+	 * Java Reachable
+	 */
 	@Override
 	public void run() {
-		// TODO 自動生成されたメソッド・スタブ
-//		super.run();
+
 		boolean result = false;
 		this.status = 0;
 
 		try {
+			// jdk Reachable test
 			result = this.address.isReachable(ReachabilityTest.TIMEOUT);
 		} catch (Throwable e) {
-			// TODO 自動生成された catch ブロック
 			e.printStackTrace();
 		}
 		if(result){
@@ -129,46 +149,57 @@ class Sendping implements Runnable {
 		} else {
 			this.status = -1;
 		}
+		// 実施件数カウンタ
 		ReachabilityTest.count++;
 	}
 }
 
+/**
+ * send ping 2 
+ * ping command version
+ * @author Takeshi
+ *
+ */
 class Sendping2 extends Thread {
 	private InetAddress address;
 	private int status = 0;
+
+	/**
+	 * ステータスの設定
+	 * @param status
+	 */
 	public void setStatus(int status) {
 		this.status = status;
 	}
+	/**
+	 * ステータスの取得
+	 * @return
+	 */
 	public int getStatus() {
 		return status;
 	}
+	/**
+	 * コンストラクタ
+	 * @param args
+	 */
 	public Sendping2( InetAddress args ) {
-		// TODO 自動生成されたコンストラクター・スタブ
 		this.address = args;
 	}
+
+	/**
+	 * タスク
+	 */
 	@Override
 	public void run() {
-		// TODO 自動生成されたメソッド・スタブ
 		super.run();
-		boolean result = false;
-		int read = 0;
-		char readc;
 
 		this.status = 0;
 		Process proc = null;
 		try {
-			proc = Runtime.getRuntime().exec("ping -n 1 -4");
+			proc = Runtime.getRuntime().exec("ping -n 1 " + this.address);
 		} catch (IOException e) {
-			// TODO 自動生成された catch ブロック
 			e.printStackTrace();
 		}
-		if(result){
-			this.status = 1;
-		} else {
-			this.status = -1;
-		}
+		this .status = proc.exitValue();
 	}
-}
-class SenderStatus {
-	private int status = 0;
 }

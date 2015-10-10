@@ -224,7 +224,7 @@ public class AsyncPing extends Thread {
 				Thread.sleep(Long.parseLong(this.listdto.getInterval()));
 			}
 
-			// 分析依頼キューに詰め込む
+			// 分析依頼キューに自分を詰め込む
 			factory.enqueue(this);
 			
 		} catch (NumberFormatException numex ){
@@ -235,6 +235,7 @@ public class AsyncPing extends Thread {
 			resultDto.procEndDateTime = new java.util.Date();
 			resultDto.errStack = numex.getStackTrace();
 			resultDto.msg = numex.getMessage();
+			this.factory.putCacheStatus(this.ruleid,resultDto);
 		} catch (InterruptedException Irpe) {
 			// Ping例外
 			resultDto.cnt = cnt;
@@ -243,6 +244,7 @@ public class AsyncPing extends Thread {
 			resultDto.procEndDateTime = new java.util.Date();
 			resultDto.errStack = Irpe.getStackTrace();
 			resultDto.msg = Irpe.getMessage();
+			this.factory.putCacheStatus(this.ruleid,resultDto);
 		} catch (IOException IOe) {
 			// IOException
 			resultDto.cnt = cnt;
@@ -251,8 +253,8 @@ public class AsyncPing extends Thread {
 			resultDto.procEndDateTime = new java.util.Date();
 			resultDto.errStack = IOe.getStackTrace();
 			resultDto.msg = IOe.getMessage();
-		} finally {
 			this.factory.putCacheStatus(this.ruleid,resultDto);
+		} finally {
 		}
 		
 
